@@ -248,6 +248,15 @@ export default function ArticlePage() {
             </div>
           )}
           <div className="mx-auto flex max-w-2xl justify-center gap-3">
+            {!article.translation && !translating && (
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="rounded-md border border-giants-black/20 px-6 py-2 text-sm font-medium text-giants-black"
+              >
+                略過
+              </button>
+            )}
             {!article.translation && (
               <button
                 type="button"
