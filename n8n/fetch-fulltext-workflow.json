@@ -1,0 +1,80 @@
+{
+  "name": "抓全文 Webhook",
+  "nodes": [
+    {
+      "id": "b1a1c1d1-0001-4001-8001-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fetch-fulltext",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "b1a1c1d1-0002-4002-8002-000000000002",
+      "name": "抓取 HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "parameters": {
+        "url": "={{ $json.body.url }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b1a1c1d1-0003-4003-8003-000000000003",
+      "name": "清理內容",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "parameters": {
+        "jsCode": "const item = $input.first();\nlet html = '';\nif (typeof item.json === 'string') {\n  html = item.json;\n} else if (typeof item.json.data === 'string') {\n  html = item.json.data;\n} else if (typeof item.json.body === 'string') {\n  html = item.json.body;\n} else {\n  html = JSON.stringify(item.json);\n}\n\nif (!html || html.length < 50) {\n  return [{ json: { error: '抓取失敗：找不到網頁內容' } }];\n}\n\nfunction stripTags(s) {\n  return s\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nlet cleaned = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<nav[\\s\\S]*?<\\/nav>/gi, ' ')\n  .replace(/<footer[\\s\\S]*?<\\/footer>/gi, ' ')\n  .replace(/<header[\\s\\S]*?<\\/header>/gi, ' ')\n  .replace(/<!--[\\s\\S]*?-->/g, ' ');\n\nconst articleMatch = cleaned.match(/<article[^>]*>([\\s\\S]*?)<\\/article>/i);\n\nlet text = '';\nif (articleMatch) {\n  text = stripTags(articleMatch[1]);\n} else {\n  const paragraphs = [...cleaned.matchAll(/<p[^>]*>([\\s\\S]*?)<\\/p>/gi)].map((m) => stripTags(m[1]));\n  text = paragraphs.filter((p) => p.length > 40).join('\\n\\n');\n  if (!text) {\n    text = stripTags(cleaned);\n  }\n}\n\nconst titleMatch = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst title = titleMatch ? stripTags(titleMatch[1]) : '';\n\nif (!text || text.length < 200) {\n  return [{ json: { error: `抓取內容過短或找不到主要內文（${text.length} 字）` } }];\n}\n\nreturn [{ json: { title, text, chars: text.length } }];"
+      }
+    },
+    {
+      "id": "b1a1c1d1-0004-4004-8004-000000000004",
+      "name": "回應",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "抓取 HTML", "type": "main", "index": 0 }]]
+    },
+    "抓取 HTML": {
+      "main": [[{ "node": "清理內容", "type": "main", "index": 0 }]]
+    },
+    "清理內容": {
+      "main": [[{ "node": "回應", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {}
+}

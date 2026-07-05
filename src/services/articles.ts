@@ -37,6 +37,16 @@ export async function setArticleState(id: string, state: ArticleState) {
   await updateDoc(doc(articlesCol, id), { state });
 }
 
+export function subscribeToArticle(id: string, onData: (article: Article | null) => void) {
+  return onSnapshot(doc(articlesCol, id), (snap) => {
+    onData(snap.exists() ? ({ id: snap.id, ...snap.data() } as Article) : null);
+  });
+}
+
+export async function updateArticleFullText(id: string, fullText: string) {
+  await updateDoc(doc(articlesCol, id), { fullText });
+}
+
 export async function isLinkDuplicate(link: string): Promise<boolean> {
   const snapshot = await getDocs(query(articlesCol, where('link', '==', link)));
   return !snapshot.empty;

@@ -72,7 +72,11 @@ Webhook (POST {url})
   失敗時 Respond：{ error }
 ```
 
-建立完成後，將 webhook 網址填入網頁「設定」頁的 `fetchWebhookUrl` 欄位。
+可直接匯入 [n8n/fetch-fulltext-workflow.json](./n8n/fetch-fulltext-workflow.json)：n8n Console → Workflows → Import from File，匯入後啟用（Active）。
+
+前端會用 `POST { url: <文章連結> }` 呼叫這個 webhook，預期回應 `{ title, text, chars }` 或 `{ error }`。
+
+建立完成後，將 webhook 網址（n8n 顯示的 Production URL）填入網頁「設定」頁的 `fetchWebhookUrl` 欄位。
 
 ## 技術棧
 
@@ -94,7 +98,7 @@ src/
 
 - [x] Phase 0　初始化
 - [x] Phase 1　Firebase＋新聞流
-- [ ] Phase 2　文章頁與抓全文
+- [x] Phase 2　文章頁與抓全文
 - [ ] Phase 3　翻譯
 - [ ] Phase 4　素材庫
 - [ ] Phase 5　寫作工作台
