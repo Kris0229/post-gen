@@ -78,6 +78,41 @@ Webhook (POST {url})
 
 建立完成後，將 webhook 網址（n8n 顯示的 Production URL）填入網頁「設定」頁的 `fetchWebhookUrl` 欄位。
 
+### 3. 雙寫觀察期結束後停用 Notion 節點
+
+RSS 線並聯寫入 Firestore 穩定一週後，確認 Firestore 資料正常，即可停用（或刪除）原本「建立 Notion 卡片」節點，正式以 Firestore 為唯一資料來源。
+
+## 部署（GitHub Pages）
+
+本專案部署到 <https://kris0229.github.io/post-gen/>（GitHub repo：[Kris0229/post-gen](https://github.com/Kris0229/post-gen)）。
+
+### 1. 設定 GitHub Actions Secrets
+
+Repo → Settings → Secrets and variables → Actions → New repository secret，新增以下 7 個（值取自你本機的 `.env`）：
+
+```
+VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID
+VITE_OWNER_UID
+```
+
+### 2. 設定 Pages 來源
+
+Repo → Settings → Pages → Build and deployment → Source 選 **GitHub Actions**。
+
+### 3. 推送到 main
+
+推送後 [.github/workflows/deploy.yml](./.github/workflows/deploy.yml) 會自動建置並部署，完成後即可透過上方網址存取。之後每次推送到 `main` 都會自動重新部署。
+
+### 4. 其他
+
+- OpenAI API Key、`translatorInstructions` 等設定存在瀏覽器 localStorage／Firestore，**不需要**在部署流程中額外處理，正式網址第一次登入後跟本機開發時一樣走「白名單」流程即可。
+- SPA 路由在 GitHub Pages 重新整理不會 404，是靠 [public/404.html](./public/404.html) ＋ `index.html` 內的還原腳本處理（[rafgraph/spa-github-pages](https://github.com/rafgraph/spa-github-pages) 手法）。
+
 ## 技術棧
 
 React 18 + TypeScript + Vite、Tailwind CSS v4、Zustand、react-router-dom、Firebase（Firestore + Auth）。OpenAI 串流使用原生 `fetch` 解析 SSE，不使用官方 SDK。

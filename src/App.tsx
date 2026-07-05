@@ -11,7 +11,7 @@ import SettingsPage from './pages/SettingsPage';
 export default function App() {
   return (
     <AuthGate>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<NewsFeedPage />} />
