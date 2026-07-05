@@ -30,3 +30,7 @@ export function sourceColor(source: string): string {
   }
   return SOURCE_PALETTE[hash % SOURCE_PALETTE.length];
 }
+
+export function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 2);
+}

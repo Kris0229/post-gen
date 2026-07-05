@@ -47,6 +47,10 @@ export async function updateArticleFullText(id: string, fullText: string) {
   await updateDoc(doc(articlesCol, id), { fullText });
 }
 
+export async function updateArticleTranslation(id: string, translation: string) {
+  await updateDoc(doc(articlesCol, id), { translation });
+}
+
 export async function isLinkDuplicate(link: string): Promise<boolean> {
   const snapshot = await getDocs(query(articlesCol, where('link', '==', link)));
   return !snapshot.empty;

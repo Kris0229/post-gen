@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { subscribeToArticle, updateArticleFullText } from '../services/articles';
+import {
+  setArticleState,
+  subscribeToArticle,
+  updateArticleFullText,
+  updateArticleTranslation,
+} from '../services/articles';
 import { fetchFullTextViaWebhook, MIN_FULLTEXT_CHARS } from '../services/fetchFullText';
 import { getConfig } from '../services/settings';
+import { getStoredApiKey, OpenAIError, streamChatCompletion } from '../lib/openai';
 import { sourceColor } from '../lib/format';
+import SaveMaterialModal from '../components/SaveMaterialModal';
 import type { Article } from '../types';
 
 type ViewMode = 'original' | 'translation' | 'compare';
@@ -17,6 +24,11 @@ export default function ArticlePage() {
   const [manualText, setManualText] = useState('');
   const [view, setView] = useState<ViewMode>('original');
   const attempted = useRef(false);
+
+  const [translating, setTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState('');
+  const [streamingTranslation, setStreamingTranslation] = useState('');
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -63,6 +75,53 @@ export default function ArticlePage() {
     setManualText('');
   }
 
+  async function handleTranslate() {
+    if (!article) return;
+    const apiKey = getStoredApiKey();
+    if (!apiKey) {
+      navigate('/settings');
+      return;
+    }
+    setTranslating(true);
+    setTranslateError('');
+    setStreamingTranslation('');
+    setView('translation');
+    let acc = '';
+    try {
+      const config = await getConfig();
+      for await (const chunk of streamChatCompletion({
+        apiKey,
+        model: 'gpt-5',
+        reasoningEffort: 'minimal',
+        messages: [
+          { role: 'system', content: config.translatorInstructions },
+          { role: 'user', content: article.fullText },
+        ],
+      })) {
+        acc += chunk;
+        setStreamingTranslation(acc);
+      }
+      await updateArticleTranslation(article.id, acc);
+    } catch (e) {
+      if (acc) {
+        await updateArticleTranslation(article.id, acc).catch(() => {});
+      }
+      if (e instanceof OpenAIError && e.status === 401) {
+        navigate('/settings');
+        return;
+      }
+      setTranslateError(e instanceof Error ? e.message : '翻譯失敗');
+    } finally {
+      setTranslating(false);
+    }
+  }
+
+  async function handleSkip() {
+    if (!article) return;
+    await setArticleState(article.id, 'skipped');
+    navigate('/');
+  }
+
   if (article === undefined) {
     return <div className="p-4 text-sm text-giants-black/50">載入中…</div>;
   }
@@ -71,6 +130,7 @@ export default function ArticlePage() {
   }
 
   const needsManualInput = !article.fullText && !fetching && fetchError;
+  const translationText = translating ? streamingTranslation : article.translation;
 
   return (
     <div className="p-4 pb-24">
@@ -156,7 +216,7 @@ export default function ArticlePage() {
           )}
           {view === 'translation' && (
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-giants-black">
-              {article.translation || '尚未翻譯'}
+              {translationText || (translating ? '' : '尚未翻譯')}
             </p>
           )}
           {view === 'compare' && (
@@ -168,12 +228,66 @@ export default function ArticlePage() {
               <div>
                 <h2 className="mb-1 text-xs font-bold text-giants-black/50">譯文</h2>
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-giants-black">
-                  {article.translation || '尚未翻譯'}
+                  {translationText || (translating ? '' : '尚未翻譯')}
                 </p>
               </div>
             </div>
           )}
         </>
+      )}
+
+      {article.fullText && (
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t border-giants-black/10 bg-white p-3">
+          {translateError && (
+            <div className="mb-2 flex items-center justify-between rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              <span>{translateError}</span>
+              <button type="button" onClick={handleTranslate} className="font-medium underline">
+                重試
+              </button>
+            </div>
+          )}
+          <div className="mx-auto flex max-w-2xl justify-center gap-3">
+            {!article.translation && (
+              <button
+                type="button"
+                onClick={handleTranslate}
+                disabled={translating}
+                className="rounded-md bg-giants-orange px-6 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {translating ? '翻譯中…' : '翻譯'}
+              </button>
+            )}
+            {article.translation && !translating && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  className="rounded-md border border-giants-black/20 px-6 py-2 text-sm font-medium text-giants-black"
+                >
+                  略過
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSaveModal(true)}
+                  className="rounded-md bg-giants-orange px-6 py-2 text-sm font-medium text-white"
+                >
+                  儲存為素材
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showSaveModal && (
+        <SaveMaterialModal
+          article={article}
+          onClose={() => setShowSaveModal(false)}
+          onSaved={() => {
+            setShowSaveModal(false);
+            navigate('/');
+          }}
+        />
       )}
     </div>
   );

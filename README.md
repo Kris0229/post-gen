@@ -99,7 +99,7 @@ src/
 - [x] Phase 0　初始化
 - [x] Phase 1　Firebase＋新聞流
 - [x] Phase 2　文章頁與抓全文
-- [ ] Phase 3　翻譯
+- [x] Phase 3　翻譯
 - [ ] Phase 4　素材庫
 - [ ] Phase 5　寫作工作台
 - [ ] Phase 6　部署
