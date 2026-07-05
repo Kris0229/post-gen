@@ -137,4 +137,4 @@ src/
 - [x] Phase 3　翻譯
 - [x] Phase 4　素材庫
 - [x] Phase 5　寫作工作台
-- [ ] Phase 6　部署
+- [x] Phase 6　部署
