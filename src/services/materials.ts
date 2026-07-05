@@ -4,6 +4,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -52,4 +53,11 @@ export async function updateMaterial(
 
 export async function deleteMaterial(id: string) {
   await deleteDoc(doc(materialsCol, id));
+}
+
+export async function getMaterialsByIds(ids: string[]): Promise<Material[]> {
+  const snaps = await Promise.all(ids.map((id) => getDoc(doc(materialsCol, id))));
+  return snaps
+    .filter((snap) => snap.exists())
+    .map((snap) => ({ id: snap.id, ...snap.data() }) as Material);
 }
