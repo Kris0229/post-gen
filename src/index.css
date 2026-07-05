@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-giants-orange: #fd5a1e;
+  --color-giants-black: #27251f;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
