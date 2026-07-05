@@ -60,7 +60,8 @@ export default function ArticlePage() {
         setFetchError(result.error ? `抓取失敗：${result.error}` : `抓取內容過短（僅 ${text.length} 字），可能遇到付費牆`);
         return;
       }
-      await updateArticleFullText(target.id, text);
+      const shouldAdoptTitle = target.title === target.link && !!result.title;
+      await updateArticleFullText(target.id, text, shouldAdoptTitle ? result.title : undefined);
     } catch (e) {
       setFetchError(e instanceof Error ? e.message : '抓取失敗');
     } finally {

@@ -100,6 +100,6 @@ src/
 - [x] Phase 1　Firebase＋新聞流
 - [x] Phase 2　文章頁與抓全文
 - [x] Phase 3　翻譯
-- [ ] Phase 4　素材庫
+- [x] Phase 4　素材庫
 - [ ] Phase 5　寫作工作台
 - [ ] Phase 6　部署

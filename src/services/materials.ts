@@ -1,4 +1,15 @@
-import { Timestamp, addDoc, collection, getDocs } from 'firebase/firestore';
+import {
+  Timestamp,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+} from 'firebase/firestore';
 import { db } from './firebase';
 import type { Material } from '../types';
 
@@ -23,4 +34,22 @@ export async function addMaterial(
     usedInSessions: [],
   };
   await addDoc(materialsCol, material);
+}
+
+export function subscribeToMaterials(onData: (materials: Material[]) => void) {
+  const q = query(materialsCol, orderBy('createdAt', 'desc'));
+  return onSnapshot(q, (snapshot) => {
+    onData(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Material));
+  });
+}
+
+export async function updateMaterial(
+  id: string,
+  patch: Partial<Pick<Material, 'title' | 'tags' | 'note'>>,
+) {
+  await updateDoc(doc(materialsCol, id), patch);
+}
+
+export async function deleteMaterial(id: string) {
+  await deleteDoc(doc(materialsCol, id));
 }

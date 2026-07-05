@@ -43,8 +43,8 @@ export function subscribeToArticle(id: string, onData: (article: Article | null)
   });
 }
 
-export async function updateArticleFullText(id: string, fullText: string) {
-  await updateDoc(doc(articlesCol, id), { fullText });
+export async function updateArticleFullText(id: string, fullText: string, title?: string) {
+  await updateDoc(doc(articlesCol, id), title ? { fullText, title } : { fullText });
 }
 
 export async function updateArticleTranslation(id: string, translation: string) {
