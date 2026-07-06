@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { subscribeConfig, updateConfig } from '../services/settings';
-import { getStoredApiKey, setStoredApiKey, testConnection } from '../lib/openai';
+import { testConnection } from '../lib/openai';
 import { estimateTokens } from '../lib/format';
 
 export default function SettingsPage() {
@@ -15,8 +15,8 @@ export default function SettingsPage() {
   const [configSaved, setConfigSaved] = useState(false);
 
   useEffect(() => {
-    setApiKey(getStoredApiKey());
     const unsubscribe = subscribeConfig((config) => {
+      setApiKey(config.apiKey);
       setTranslatorInstructions(config.translatorInstructions);
       setBlogInstructions(config.blogInstructions);
       setFetchWebhookUrl(config.fetchWebhookUrl);
@@ -24,8 +24,8 @@ export default function SettingsPage() {
     return unsubscribe;
   }, []);
 
-  function handleSaveApiKey() {
-    setStoredApiKey(apiKey.trim());
+  async function handleSaveApiKey() {
+    await updateConfig({ apiKey: apiKey.trim() });
     setApiKeySaved(true);
     setTimeout(() => setApiKeySaved(false), 1500);
   }
@@ -43,6 +43,7 @@ export default function SettingsPage() {
 
   async function handleSaveConfig() {
     await updateConfig({
+      apiKey: apiKey.trim(),
       translatorInstructions,
       blogInstructions,
       fetchWebhookUrl: fetchWebhookUrl.trim(),
@@ -86,7 +87,9 @@ export default function SettingsPage() {
             </span>
           )}
         </div>
-        <p className="mt-1 text-xs text-giants-black/50">API Key 僅存於本機瀏覽器（localStorage），不會上傳到 Firestore。</p>
+        <p className="mt-1 text-xs text-giants-black/50">
+          API Key 存於 Firestore（僅你的帳號可讀寫），登入任何裝置皆自動同步，不需重複設定。
+        </p>
       </section>
 
       <section>

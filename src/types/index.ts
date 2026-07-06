@@ -53,6 +53,7 @@ export interface Session {
 }
 
 export interface AppConfig {
+  apiKey: string;
   translatorInstructions: string;
   blogInstructions: string;
   fetchWebhookUrl: string;

@@ -1,4 +1,3 @@
-const API_KEY_STORAGE_KEY = 'openai_api_key';
 const CHAT_COMPLETIONS_URL = 'https://api.openai.com/v1/chat/completions';
 
 export type ReasoningEffort = 'minimal' | 'low' | 'medium' | 'high';
@@ -15,14 +14,6 @@ export class OpenAIError extends Error {
     super(message);
     this.status = status;
   }
-}
-
-export function getStoredApiKey(): string {
-  return localStorage.getItem(API_KEY_STORAGE_KEY) ?? '';
-}
-
-export function setStoredApiKey(key: string): void {
-  localStorage.setItem(API_KEY_STORAGE_KEY, key);
 }
 
 export async function* streamChatCompletion(opts: {

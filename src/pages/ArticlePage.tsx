@@ -8,7 +8,7 @@ import {
 } from '../services/articles';
 import { fetchFullTextViaWebhook, MIN_FULLTEXT_CHARS } from '../services/fetchFullText';
 import { getConfig } from '../services/settings';
-import { getStoredApiKey, OpenAIError, streamChatCompletion } from '../lib/openai';
+import { OpenAIError, streamChatCompletion } from '../lib/openai';
 import { sourceColor } from '../lib/format';
 import SaveMaterialModal from '../components/SaveMaterialModal';
 import type { Article } from '../types';
@@ -78,8 +78,8 @@ export default function ArticlePage() {
 
   async function handleTranslate() {
     if (!article) return;
-    const apiKey = getStoredApiKey();
-    if (!apiKey) {
+    const config = await getConfig();
+    if (!config.apiKey) {
       navigate('/settings');
       return;
     }
@@ -89,9 +89,8 @@ export default function ArticlePage() {
     setView('translation');
     let acc = '';
     try {
-      const config = await getConfig();
       for await (const chunk of streamChatCompletion({
-        apiKey,
+        apiKey: config.apiKey,
         model: 'gpt-5',
         reasoningEffort: 'minimal',
         messages: [

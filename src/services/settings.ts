@@ -5,6 +5,7 @@ import type { AppConfig } from '../types';
 const configDocRef = doc(db, 'settings', 'config');
 
 const DEFAULT_CONFIG: AppConfig = {
+  apiKey: '',
   translatorInstructions: '',
   blogInstructions: '',
   fetchWebhookUrl: '',

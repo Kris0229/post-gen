@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getMaterialsByIds } from '../services/materials';
 import { saveFinalDraft, subscribeToSession, updateSessionMessages } from '../services/sessions';
 import { getConfig } from '../services/settings';
-import { getStoredApiKey, OpenAIError, streamChatCompletion } from '../lib/openai';
+import { OpenAIError, streamChatCompletion } from '../lib/openai';
 import SessionMaterialsPanel from '../components/SessionMaterialsPanel';
 import type { ChatMessage, Material, Session } from '../types';
 
@@ -67,8 +67,8 @@ export default function WriteSessionPage() {
 
   async function sendTurn(baseMessages: ChatMessage[]) {
     if (!sessionId) return;
-    const apiKey = getStoredApiKey();
-    if (!apiKey) {
+    const config = await getConfig();
+    if (!config.apiKey) {
       navigate('/settings');
       return;
     }
@@ -77,9 +77,8 @@ export default function WriteSessionPage() {
     setStreamingReply('');
     let acc = '';
     try {
-      const config = await getConfig();
       for await (const chunk of streamChatCompletion({
-        apiKey,
+        apiKey: config.apiKey,
         model: 'gpt-5',
         messages: [
           { role: 'system', content: config.blogInstructions },
