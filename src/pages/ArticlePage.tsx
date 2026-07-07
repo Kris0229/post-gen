@@ -175,14 +175,23 @@ export default function ArticlePage() {
             rows={8}
             className="w-full rounded-md border border-giants-black/20 p-2 text-sm text-giants-black"
           />
-          <button
-            type="button"
-            onClick={handleManualSave}
-            disabled={!manualText.trim()}
-            className="mt-2 rounded-md bg-giants-orange px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-          >
-            儲存全文
-          </button>
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={handleManualSave}
+              disabled={!manualText.trim()}
+              className="rounded-md bg-giants-orange px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            >
+              儲存全文
+            </button>
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="rounded-md border border-giants-black/20 px-4 py-1.5 text-sm font-medium text-giants-black"
+            >
+              略過
+            </button>
+          </div>
         </div>
       )}
 
