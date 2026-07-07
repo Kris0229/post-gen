@@ -79,7 +79,8 @@ export default function WriteSessionPage() {
     try {
       for await (const chunk of streamChatCompletion({
         apiKey: config.apiKey,
-        model: 'gpt-5',
+        model: 'gpt-5.2',
+        reasoningEffort: 'high',
         messages: [
           { role: 'system', content: config.blogInstructions },
           ...baseMessages.map((m) => ({ role: m.role, content: m.content })),
