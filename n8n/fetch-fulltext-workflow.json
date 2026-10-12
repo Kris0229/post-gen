@@ -6,7 +6,10 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300],
+      "position": [
+        240,
+        300
+      ],
       "parameters": {
         "httpMethod": "POST",
         "path": "fetch-fulltext",
@@ -19,7 +22,10 @@
       "name": "抓取 HTML",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [460, 300],
+      "position": [
+        460,
+        300
+      ],
       "parameters": {
         "url": "={{ $json.body.url }}",
         "method": "GET",
@@ -47,9 +53,12 @@
       "name": "清理內容",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300],
+      "position": [
+        680,
+        300
+      ],
       "parameters": {
-        "jsCode": "const item = $input.first();\nlet html = '';\nif (typeof item.json === 'string') {\n  html = item.json;\n} else if (typeof item.json.data === 'string') {\n  html = item.json.data;\n} else if (typeof item.json.body === 'string') {\n  html = item.json.body;\n} else {\n  html = JSON.stringify(item.json);\n}\n\nif (!html || html.length < 50) {\n  return [{ json: { error: '抓取失敗：找不到網頁內容' } }];\n}\n\nfunction stripTags(s) {\n  return s\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nlet cleaned = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<nav[\\s\\S]*?<\\/nav>/gi, ' ')\n  .replace(/<footer[\\s\\S]*?<\\/footer>/gi, ' ')\n  .replace(/<header[\\s\\S]*?<\\/header>/gi, ' ')\n  .replace(/<!--[\\s\\S]*?-->/g, ' ');\n\nconst articleMatch = cleaned.match(/<article[^>]*>([\\s\\S]*?)<\\/article>/i);\n\nlet text = '';\nif (articleMatch) {\n  text = stripTags(articleMatch[1]);\n} else {\n  const paragraphs = [...cleaned.matchAll(/<p[^>]*>([\\s\\S]*?)<\\/p>/gi)].map((m) => stripTags(m[1]));\n  text = paragraphs.filter((p) => p.length > 40).join('\\n\\n');\n  if (!text) {\n    text = stripTags(cleaned);\n  }\n}\n\nconst titleMatch = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst title = titleMatch ? stripTags(titleMatch[1]) : '';\n\nif (!text || text.length < 200) {\n  return [{ json: { error: `抓取內容過短或找不到主要內文（${text.length} 字）` } }];\n}\n\nreturn [{ json: { title, text, chars: text.length } }];"
+        "jsCode": "const item = $input.first();\nlet html = '';\nif (typeof item.json === 'string') {\n  html = item.json;\n} else if (typeof item.json.data === 'string') {\n  html = item.json.data;\n} else if (typeof item.json.body === 'string') {\n  html = item.json.body;\n}\n\n// 拿不到字串（例如被擋時回 JSON）就直接視為失敗，不要把 JSON 當成文章\nif (!html || html.length < 50) {\n  return [{ json: { error: '抓取失敗：網站回傳的不是網頁內容（可能被擋）' } }];\n}\n\n// 驗證頁通常很短；正常文章頁即使載入 DataDome 腳本也遠大於此\nif (html.length < 5000 && /captcha|datadome|cf-chl|just a moment/i.test(html)) {\n  return [{ json: { error: '抓取失敗：網站啟用機器人驗證（captcha）' } }];\n}\n\nfunction stripTags(s) {\n  return s\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nlet cleaned = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<nav[\\s\\S]*?<\\/nav>/gi, ' ')\n  .replace(/<footer[\\s\\S]*?<\\/footer>/gi, ' ')\n  .replace(/<header[\\s\\S]*?<\\/header>/gi, ' ')\n  .replace(/<!--[\\s\\S]*?-->/g, ' ');\n\nconst articleMatch = cleaned.match(/<article[^>]*>([\\s\\S]*?)<\\/article>/i);\n\nlet text = '';\nif (articleMatch) {\n  text = stripTags(articleMatch[1]);\n} else {\n  const paragraphs = [...cleaned.matchAll(/<p[^>]*>([\\s\\S]*?)<\\/p>/gi)].map((m) => stripTags(m[1]));\n  text = paragraphs.filter((p) => p.length > 40).join('\\n\\n');\n  if (!text) {\n    text = stripTags(cleaned);\n  }\n}\n\nconst titleMatch = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst title = titleMatch ? stripTags(titleMatch[1]) : '';\n\nif (!text || text.length < 200) {\n  return [{ json: { error: `抓取內容過短或找不到主要內文（${text.length} 字）` } }];\n}\n\nreturn [{ json: { title, text, chars: text.length } }];"
       }
     },
     {
@@ -57,7 +66,10 @@
       "name": "回應",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [900, 300],
+      "position": [
+        900,
+        300
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ $json }}",
@@ -67,13 +79,37 @@
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "抓取 HTML", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "抓取 HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "抓取 HTML": {
-      "main": [[{ "node": "清理內容", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "清理內容",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "清理內容": {
-      "main": [[{ "node": "回應", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "回應",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "pinData": {}

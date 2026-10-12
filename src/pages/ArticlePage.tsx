@@ -6,7 +6,11 @@ import {
   updateArticleFullText,
   updateArticleTranslation,
 } from '../services/articles';
-import { fetchFullTextViaWebhook, MIN_FULLTEXT_CHARS } from '../services/fetchFullText';
+import {
+  fetchFullTextViaWebhook,
+  looksLikeBotBlock,
+  MIN_FULLTEXT_CHARS,
+} from '../services/fetchFullText';
 import { getConfig } from '../services/settings';
 import { OpenAIError, streamChatCompletion } from '../lib/openai';
 import { sourceColor } from '../lib/format';
@@ -22,6 +26,7 @@ export default function ArticlePage() {
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState('');
   const [manualText, setManualText] = useState('');
+  const [showRepaste, setShowRepaste] = useState(false);
   const [view, setView] = useState<ViewMode>('original');
   const attempted = useRef(false);
 
@@ -60,6 +65,10 @@ export default function ArticlePage() {
         setFetchError(result.error ? `抓取失敗：${result.error}` : `抓取內容過短（僅 ${text.length} 字），可能遇到付費牆`);
         return;
       }
+      if (looksLikeBotBlock(text)) {
+        setFetchError('抓到的是網站的機器人驗證頁，不是文章內容，請手動貼上全文');
+        return;
+      }
       const shouldAdoptTitle = target.title === target.link && !!result.title;
       await updateArticleFullText(target.id, text, shouldAdoptTitle ? result.title : undefined);
     } catch (e) {
@@ -74,6 +83,7 @@ export default function ArticlePage() {
     await updateArticleFullText(article.id, manualText.trim());
     setFetchError('');
     setManualText('');
+    setShowRepaste(false);
   }
 
   async function handleTranslate() {
@@ -130,6 +140,7 @@ export default function ArticlePage() {
   }
 
   const needsManualInput = !article.fullText && !fetching && fetchError;
+  const canRepaste = !!article.fullText && !article.translation && !translating;
   const translationText = translating ? streamingTranslation : article.translation;
 
   return (
@@ -165,9 +176,9 @@ export default function ArticlePage() {
         </div>
       )}
 
-      {needsManualInput && (
+      {(needsManualInput || (canRepaste && showRepaste)) && (
         <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-          <p className="mb-2">{fetchError}</p>
+          <p className="mb-2">{needsManualInput ? fetchError : '貼上後會覆蓋目前儲存的全文'}</p>
           <textarea
             value={manualText}
             onChange={(e) => setManualText(e.target.value)}
@@ -184,15 +195,35 @@ export default function ArticlePage() {
             >
               儲存全文
             </button>
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="rounded-md border border-giants-black/20 px-4 py-1.5 text-sm font-medium text-giants-black"
-            >
-              略過
-            </button>
+            {needsManualInput ? (
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="rounded-md border border-giants-black/20 px-4 py-1.5 text-sm font-medium text-giants-black"
+              >
+                略過
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowRepaste(false)}
+                className="rounded-md border border-giants-black/20 px-4 py-1.5 text-sm font-medium text-giants-black"
+              >
+                取消
+              </button>
+            )}
           </div>
         </div>
+      )}
+
+      {canRepaste && !showRepaste && (
+        <button
+          type="button"
+          onClick={() => setShowRepaste(true)}
+          className="mb-3 text-xs text-giants-black/50 underline"
+        >
+          全文不對？重新貼上
+        </button>
       )}
 
       {article.fullText && (
