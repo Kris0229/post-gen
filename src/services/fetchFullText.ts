@@ -25,9 +25,12 @@ export async function fetchFullTextViaWebhook(
   webhookUrl: string,
   link: string,
 ): Promise<FetchFullTextResult> {
+  // Apps Script 網頁應用程式不回應 OPTIONS。Content-Type 必須是
+  // text/plain（可帶 charset=utf-8），且不能加其他會觸發預檢的 header，
+  // 瀏覽器才會把這次 POST 當成 CORS simple request。本文仍是 JSON 字串。
   const res = await fetch(webhookUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ url: link }),
   });
   if (!res.ok) {

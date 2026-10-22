@@ -124,9 +124,12 @@ export default function SettingsPage() {
           type="url"
           value={fetchWebhookUrl}
           onChange={(e) => setFetchWebhookUrl(e.target.value)}
-          placeholder="https://your-n8n.example.com/webhook/fetch-fulltext"
+          placeholder="https://script.google.com/macros/s/…/exec"
           className="w-full rounded-md border border-giants-black/20 px-3 py-2 text-sm"
         />
+        <p className="mt-1 text-xs text-giants-black/50">
+          貼上 Apps Script 網頁應用程式的 /exec 網址。前端以 text/plain 送出 JSON，避免 CORS 預檢。
+        </p>
       </section>
 
       <button
