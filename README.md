@@ -74,9 +74,9 @@ Webhook (POST {url})
 
 可直接匯入 [n8n/fetch-fulltext-workflow.json](./n8n/fetch-fulltext-workflow.json)：n8n Console → Workflows → Import from File，匯入後啟用（Active）。
 
-前端會用 `POST { url: <文章連結> }` 呼叫這個 webhook，預期回應 `{ title, text, chars }` 或 `{ error }`。
+前端會用 CORS simple request 呼叫這個網址：`POST`，`Content-Type: text/plain;charset=utf-8`，本文為 `JSON.stringify({ url: <文章連結> })`，不帶會觸發預檢的 header。預期回應仍是 `{ title, text, chars }` 或 `{ error }`。失敗時文章頁維持手動貼上全文。
 
-建立完成後，將 webhook 網址（n8n 顯示的 Production URL）填入網頁「設定」頁的 `fetchWebhookUrl` 欄位。
+請把 Apps Script 網頁應用程式部署後的 **/exec** 網址填入網頁「設定」頁的 `fetchWebhookUrl`。部署時執行身分選自己、存取權選「任何人」，Apps Script 才會在未預檢的 POST 回應帶上 CORS header。`doPost` 要從 `e.postData.contents` 解析 JSON（Content-Type 是 text/plain，不會自動變成物件）。
 
 ### 3. 雙寫觀察期結束後停用 Notion 節點
 
